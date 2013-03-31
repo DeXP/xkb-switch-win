@@ -23,7 +23,7 @@
 				</Linker>
 			</Target>
 			<Target title="Release32">
-				<Option output="bin/libxkbswitchwin" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/libxkbswitch32" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/win32/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -36,6 +36,30 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add option="-entry=_DllMain@12" />
+					<Add option="-nostartfiles" />
+					<Add option="-nostdlib" />
+					<Add option="-nodefaultlibs" />
+					<Add option="-lgcc" />
+					<Add library="user32" />
+					<Add library="kernel32" />
+				</Linker>
+			</Target>
+			<Target title="Release64">
+				<Option output="bin/libxkbswitch64" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/win64/" />
+				<Option type="3" />
+				<Option compiler="x64_gnu_gcc_compiler" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-Wall" />
+					<Add option="-DBUILD_DLL" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-entry=DllMain" />
 					<Add option="-nostartfiles" />
 					<Add option="-nostdlib" />
 					<Add option="-nodefaultlibs" />
