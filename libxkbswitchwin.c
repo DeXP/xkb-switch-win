@@ -24,6 +24,21 @@
 
 char lName[LBUF+1];
 
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    lName[0] = 0;
+    lName[1] = 0;
+    lName[2] = 0;
+    return TRUE; // succesful
+}
+
+inline char dtolower(char c){
+    if( (c>='A') && (c<='Z') ) c = c - 'A' + 'a';
+    return c;
+}
+
+
 __declspec(dllexport)
 const char *  Xkb_Switch_getXkbLayout( const char * param /* unused */ ){
     unsigned int x;
@@ -38,14 +53,11 @@ const char *  Xkb_Switch_getXkbLayout( const char * param /* unused */ ){
         currentLayout = GetKeyboardLayout(threadId);
         x = (unsigned int)currentLayout & 0x0000FFFF;
         localez = MAKELCID( (LANGID)x, SORT_DEFAULT);
-        GetLocaleInfo(localez, LOCALE_SISO639LANGNAME, lName, LBUF);
+        GetLocaleInfo(localez, LOCALE_SISO3166CTRYNAME, lName, LBUF);
 
-        if( (lName[0]=='e') && (lName[1]=='n') ){
-            /* Replace 'en' string to 'us' */
-            lName[0] = 'u';
-            lName[1] = 's';
-            lName[2] = 0;
-        }
+        lName[0] = dtolower(lName[0]);
+        lName[1] = dtolower(lName[1]);
+        lName[2] = 0;
         return lName;
     } else return NULL;
 }
@@ -67,8 +79,12 @@ const char *  Xkb_Switch_setXkbLayout( const char *  newgrp ){
     for(i=0; i<n; i++){
         Lid = ((unsigned int)lpList[i]) & 0x0000FFFF; /* bottom 16 bit */
         LCID localez = MAKELCID( (LANGID)Lid, SORT_DEFAULT);
-        GetLocaleInfo(localez, LOCALE_SISO639LANGNAME, lName, LBUF);
-        if( (hwnd) && (newgrp[0] == lName[0]) && (newgrp[1] == lName[1]) ){
+        GetLocaleInfo(localez, LOCALE_SISO3166CTRYNAME, lName, LBUF);
+        if(
+           (hwnd) &&
+           ( dtolower(newgrp[0]) == dtolower(lName[0]) ) &&
+           ( dtolower(newgrp[1]) == dtolower(lName[1]) )
+        ){
             currentLayout = lpList[i];
             PostMessage(hwnd,WM_INPUTLANGCHANGEREQUEST,0,(LPARAM)(currentLayout));
             return lName;
