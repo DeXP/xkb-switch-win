@@ -22,11 +22,13 @@
 #define MAX_LAYS 10
 #define LBUF 3
 #define KBUF_SIZE 256
+#define BIGBUF 500
 
 
 char lName[LBUF+1];
 char aName[LBUF+1];
 char keybuf[KBUF_SIZE];
+volatile char stringBuf[BIGBUF];
 
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -42,6 +44,21 @@ inline char dtolower(char c){
     return c;
 }
 
+__declspec(dllexport)
+int dxGetLayout(long a){
+    unsigned int x;
+    HWND hwnd;
+    DWORD threadId;
+    HKL currentLayout;
+
+    hwnd = GetForegroundWindow();
+    if( hwnd ){
+        threadId = GetWindowThreadProcessId(hwnd, NULL);
+        currentLayout = GetKeyboardLayout(threadId);
+        x = (unsigned int)currentLayout & 0x0000FFFF;
+        return x;
+    } else return -1;
+}
 
 __declspec(dllexport)
 const char *  Xkb_Switch_getXkbLayout( const char * param /* unused */ ){
@@ -99,6 +116,43 @@ const char *  Xkb_Switch_setXkbLayout( const char *  newgrp ){
 
 
 __declspec(dllexport)
+char dxGetLocalizedCharByUS(char c, int layout){
+    unsigned int i, n, Lid;
+    HKL  lpList[MAX_LAYS];
+    HKL  currentLayout;
+
+    short key, topkey;
+    char keyboardState[KBUF_SIZE];
+    unsigned long wbuf = 0;
+    int canConvert = 0;
+
+    n = GetKeyboardLayoutList(0, NULL);
+    n = GetKeyboardLayoutList(n, lpList);
+
+    key = VkKeyScanEx(c, 1033); //get key from us-layout
+    topkey = (key & 0xFF00) >> 8;
+
+    for(i=0; i< ( sizeof(keyboardState)/sizeof(keyboardState[0]) ); i++) keyboardState[i] = 0;
+    if( topkey & 1 ) keyboardState[VK_SHIFT] = 0xFF;
+    if( topkey & 2 ) keyboardState[VK_CONTROL] = 0xFF;
+    if( topkey & 4 ) keyboardState[VK_MENU] = 0xFF;
+
+    for(i=0; i<n; i++){
+        Lid = ((unsigned int)lpList[i]) & 0x0000FFFF; /* bottom 16 bit */
+        currentLayout = lpList[i];
+        if( (Lid == layout) || (lpList[i] == layout) ){
+            //canConvert = ToUnicodeEx( key, 0, keyboardState, keybuf, KBUF_SIZE, 0, currentLayout );
+            canConvert = ToAsciiEx( key, 0, keyboardState, &wbuf, 0, currentLayout );
+            if( canConvert > 0 ){
+                return wbuf;
+            }
+        }
+    }
+    return 0;
+}
+
+
+__declspec(dllexport)
 const char *  Xkb_Switch_getLocalizedCharByUS( char c, const char * grp ){
     unsigned int i, n, Lid;
     HKL  lpList[MAX_LAYS];
@@ -151,4 +205,24 @@ __declspec(dllexport)
 const char *  Xkb_Switch_getCurrentCharByUS(const char * curChar){
     char c = curChar[0];
     return Xkb_Switch_getLocalizedCharByUS( c, Xkb_Switch_getXkbLayout(NULL) );
+}
+
+
+__declspec(dllexport)
+const char *  Xkb_Switch_getCurrentStringByUS(const char * curString){
+    char* retbuf;
+    int curLayout;
+    int i;
+
+    for(i=0;i<BIGBUF-1; i++) stringBuf[i] = 0;
+    curLayout = dxGetLayout(NULL);//Xkb_Switch_getXkbLayout(NULL);
+    i=0;
+    while( curString[i] != 0 ){
+        /*retbuf = Xkb_Switch_getLocalizedCharByUS( curString[i], lName );
+        stringBuf[i] = retbuf[0];*/
+        stringBuf[i] = dxGetLocalizedCharByUS( curString[i], curLayout );
+        i++;
+    }
+    stringBuf[i] = 0;
+    return stringBuf;
 }
