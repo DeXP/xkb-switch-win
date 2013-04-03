@@ -72,6 +72,9 @@
 		<Unit filename="libxkbswitchwin.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="libxkbswitchwin.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />

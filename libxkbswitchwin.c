@@ -17,18 +17,13 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include <windows.h>
-
-#define MAX_LAYS 10
-#define LBUF 3
-#define KBUF_SIZE 256
-#define BIGBUF 500
+#include "libxkbswitchwin.h"
 
 
 char lName[LBUF+1];
 char aName[LBUF+1];
-char keybuf[KBUF_SIZE];
-volatile char stringBuf[BIGBUF];
+char keybuf[KBUF_SIZE+1];
+char stringBuf[BIGBUF+1];
 
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -114,7 +109,7 @@ const char *  Xkb_Switch_setXkbLayout( const char *  newgrp ){
     return NULL;
 }
 
-
+/*
 __declspec(dllexport)
 char dxGetLocalizedCharByUS(char c, int layout){
     unsigned int i, n, Lid;
@@ -138,7 +133,7 @@ char dxGetLocalizedCharByUS(char c, int layout){
     if( topkey & 4 ) keyboardState[VK_MENU] = 0xFF;
 
     for(i=0; i<n; i++){
-        Lid = ((unsigned int)lpList[i]) & 0x0000FFFF; /* bottom 16 bit */
+        Lid = ((unsigned int)lpList[i]) & 0x0000FFFF;
         currentLayout = lpList[i];
         if( (Lid == layout) || (lpList[i] == layout) ){
             //canConvert = ToUnicodeEx( key, 0, keyboardState, keybuf, KBUF_SIZE, 0, currentLayout );
@@ -149,18 +144,19 @@ char dxGetLocalizedCharByUS(char c, int layout){
         }
     }
     return 0;
-}
+}*/
 
 
 __declspec(dllexport)
 const char *  Xkb_Switch_getLocalizedCharByUS( char c, const char * grp ){
-    unsigned int i, n, Lid;
+    unsigned int i, j, n, Lid;
     HKL  lpList[MAX_LAYS];
     HKL  currentLayout;
 
-    short key, topkey;
-    char keyboardState[KBUF_SIZE];
-    unsigned long wbuf = 0;
+    short key, topkey, topw;
+    unsigned char keyboardState[KBUF_SIZE];
+    wchar_t wstr[KBUF_SIZE];
+    //unsigned long wbuf = 0;
     int canConvert = 0;
 
     n = GetKeyboardLayoutList(0, NULL);
@@ -178,22 +174,29 @@ const char *  Xkb_Switch_getLocalizedCharByUS( char c, const char * grp ){
     if( topkey & 2 ) keyboardState[VK_CONTROL] = 0xFF;
     if( topkey & 4 ) keyboardState[VK_MENU] = 0xFF;
 
-    for(i=0; i<n; i++){
-        Lid = ((unsigned int)lpList[i]) & 0x0000FFFF; /* bottom 16 bit */
-        currentLayout = lpList[i];
+    for(j=0; j<n; j++){
+        Lid = ((unsigned int)lpList[j]) & 0x0000FFFF; /* bottom 16 bit */
+        currentLayout = lpList[j];
         LCID localez = MAKELCID( (LANGID)Lid, SORT_DEFAULT);
         GetLocaleInfo(localez, LOCALE_SISO3166CTRYNAME, aName, LBUF);
         if(
            ( dtolower(grp[0]) == dtolower(aName[0]) ) &&
            ( dtolower(grp[1]) == dtolower(aName[1]) )
         ){
-            //res = MapVirtualKeyEx(key, DMAPVK_VK_TO_CHAR, currentLayout);
-            //canConvert = ToUnicodeEx( key, 0, keyboardState, keybuf, KBUF_SIZE, 0, currentLayout );
-            canConvert = ToAsciiEx( key, 0, keyboardState, &wbuf, 0, currentLayout );
+            canConvert = ToUnicodeEx( key, 0, keyboardState, wstr, KBUF_SIZE, 0, currentLayout );
+            /*canConvert = ToAsciiEx( key, 0, keyboardState, &wbuf, 0, currentLayout );
             if( canConvert > 0 ){
                 keybuf[0] = wbuf;
                 keybuf[canConvert] = 0;
-            }
+            }*/
+            WideCharToMultiByte ( CP_UTF8,                // utf8 code page
+                          0,     // Check
+                          &wstr,         // Source Unicode string
+                          canConvert,                    // -1 means string is zero-terminated
+                          &keybuf,          // Destination char string
+                          KBUF_SIZE,    // Size of buffer
+                          NULL,                  // No default character
+                          NULL );                // Don't care about this
         }
     }
 
@@ -211,16 +214,17 @@ const char *  Xkb_Switch_getCurrentCharByUS(const char * curChar){
 __declspec(dllexport)
 const char *  Xkb_Switch_getCurrentStringByUS(const char * curString){
     char* retbuf;
-    int curLayout;
+    //int curLayout;
     int i;
 
     for(i=0;i<BIGBUF-1; i++) stringBuf[i] = 0;
-    curLayout = dxGetLayout(NULL);//Xkb_Switch_getXkbLayout(NULL);
+    //curLayout = dxGetLayout(1033);//
+    Xkb_Switch_getXkbLayout(NULL);
     i=0;
     while( curString[i] != 0 ){
-        /*retbuf = Xkb_Switch_getLocalizedCharByUS( curString[i], lName );
-        stringBuf[i] = retbuf[0];*/
-        stringBuf[i] = dxGetLocalizedCharByUS( curString[i], curLayout );
+        retbuf = Xkb_Switch_getLocalizedCharByUS( curString[i], lName );
+        stringBuf[i] = retbuf[0];
+        //stringBuf[i] = dxGetLocalizedCharByUS( curString[i], curLayout );
         i++;
     }
     stringBuf[i] = 0;
