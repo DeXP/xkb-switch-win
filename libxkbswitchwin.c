@@ -34,12 +34,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE; // succesful
 }
 
-inline char dtolower(char c){
+DX_EXPORT
+char dtolower(char c){
     if( (c>='A') && (c<='Z') ) c = c - 'A' + 'a';
     return c;
 }
 
-__declspec(dllexport)
+DX_EXPORT
 int dxGetLayout(long a){
     unsigned int x;
     HWND hwnd;
@@ -55,7 +56,7 @@ int dxGetLayout(long a){
     } else return -1;
 }
 
-__declspec(dllexport)
+DX_EXPORT
 const char *  Xkb_Switch_getXkbLayout( const char * param /* unused */ ){
     unsigned int x;
     HWND hwnd;
@@ -79,12 +80,13 @@ const char *  Xkb_Switch_getXkbLayout( const char * param /* unused */ ){
 }
 
 
-__declspec(dllexport)
+DX_EXPORT
 const char *  Xkb_Switch_setXkbLayout( const char *  newgrp ){
     unsigned int i, n, Lid;
     HKL  lpList[MAX_LAYS];
     HKL  currentLayout;
     HWND hwnd;
+    LCID localez;
 
     if ( newgrp == NULL || newgrp[ 0 ] == '\0' ) return NULL;
 
@@ -94,7 +96,7 @@ const char *  Xkb_Switch_setXkbLayout( const char *  newgrp ){
 
     for(i=0; i<n; i++){
         Lid = ((unsigned int)lpList[i]) & 0x0000FFFF; /* bottom 16 bit */
-        LCID localez = MAKELCID( (LANGID)Lid, SORT_DEFAULT);
+        localez = MAKELCID( (LANGID)Lid, SORT_DEFAULT);
         GetLocaleInfo(localez, LOCALE_SISO3166CTRYNAME, lName, LBUF);
         if(
            (hwnd) &&
@@ -110,7 +112,7 @@ const char *  Xkb_Switch_setXkbLayout( const char *  newgrp ){
 }
 
 /*
-__declspec(dllexport)
+DX_EXPORT
 char dxGetLocalizedCharByUS(char c, int layout){
     unsigned int i, n, Lid;
     HKL  lpList[MAX_LAYS];
@@ -147,11 +149,12 @@ char dxGetLocalizedCharByUS(char c, int layout){
 }*/
 
 
-__declspec(dllexport)
+DX_EXPORT
 const char *  Xkb_Switch_getLocalizedCharByUS( char c, const char * grp ){
     unsigned int i, j, n, Lid;
     HKL  lpList[MAX_LAYS];
     HKL  currentLayout;
+    LCID localez;
 
     short key, topkey, topw;
     unsigned char keyboardState[KBUF_SIZE];
@@ -177,7 +180,7 @@ const char *  Xkb_Switch_getLocalizedCharByUS( char c, const char * grp ){
     for(j=0; j<n; j++){
         Lid = ((unsigned int)lpList[j]) & 0x0000FFFF; /* bottom 16 bit */
         currentLayout = lpList[j];
-        LCID localez = MAKELCID( (LANGID)Lid, SORT_DEFAULT);
+        localez = MAKELCID( (LANGID)Lid, SORT_DEFAULT);
         GetLocaleInfo(localez, LOCALE_SISO3166CTRYNAME, aName, LBUF);
         if(
            ( dtolower(grp[0]) == dtolower(aName[0]) ) &&
@@ -204,14 +207,14 @@ const char *  Xkb_Switch_getLocalizedCharByUS( char c, const char * grp ){
 }
 
 
-__declspec(dllexport)
+DX_EXPORT
 const char *  Xkb_Switch_getCurrentCharByUS(const char * curChar){
     char c = curChar[0];
     return Xkb_Switch_getLocalizedCharByUS( c, Xkb_Switch_getXkbLayout(NULL) );
 }
 
 
-__declspec(dllexport)
+DX_EXPORT
 const char *  Xkb_Switch_getCurrentStringByUS(const char * curString){
     char* retbuf;
     //int curLayout;

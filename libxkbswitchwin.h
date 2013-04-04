@@ -9,6 +9,13 @@
 #define KBUF_SIZE 256
 #define BIGBUF 500
 
+#if defined(_MSC_VER)
+#define DX_EXPORT
+#else
+#define DX_EXPORT __declspec(dllexport)
+#endif
+
+char dtolower(char c);
 int dxGetLayout(long a);
 const char *  Xkb_Switch_getXkbLayout( const char * param /* unused */ );
 const char *  Xkb_Switch_setXkbLayout( const char *  newgrp );

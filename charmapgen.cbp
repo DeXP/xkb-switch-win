@@ -7,16 +7,24 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/charmapgen" prefix_auto="1" extension_auto="1" />
+				<Option output="charmap/Debug/charmapgen" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
+				<Linker>
+					<Add option="-nodefaultlibs" />
+					<Add option="-nostartfiles" />
+					<Add option="-mconsole" />
+					<Add option="-lgcc" />
+					<Add option="-lkernel32" />
+					<Add option="-luser32" />
+				</Linker>
 			</Target>
 			<Target title="Release32">
-				<Option output="bin/charmapgen" prefix_auto="1" extension_auto="1" />
+				<Option output="charmap/charmapgen32" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/win32/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -25,14 +33,57 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add option="-nodefaultlibs" />
+					<Add option="-nostartfiles" />
+					<Add option="-mconsole" />
+					<Add option="-lgcc" />
+					<Add option="-lkernel32" />
+					<Add option="-luser32" />
 				</Linker>
+				<ExtraCommands>
+					<Add after="upx.exe --best charmap\charmapgen32.exe" />
+				</ExtraCommands>
+			</Target>
+			<Target title="Release64">
+				<Option output="charmap/charmapgen64" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/win64/" />
+				<Option type="1" />
+				<Option compiler="x64_gnu_gcc_compiler" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-m64 -ffast-math" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-nodefaultlibs" />
+					<Add option="-nostartfiles" />
+					<Add option="-mconsole" />
+					<Add option="-lgcc" />
+					<Add option="-lkernel32" />
+					<Add option="-luser32" />
+				</Linker>
+				<ExtraCommands>
+					<Add after="mpress.exe charmap\charmapgen64.exe" />
+				</ExtraCommands>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="main.c">
+		<Unit filename="charmapgen.c">
 			<Option compilerVar="CC" />
+			<Option weight="10" />
+		</Unit>
+		<Unit filename="libxkbswitchwin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="libxkbswitchwin.h" />
+		<Unit filename="startMain.S">
+			<Option target="Debug" />
+			<Option target="Release32" />
+		</Unit>
+		<Unit filename="startMain64.S">
+			<Option target="Release64" />
 		</Unit>
 		<Extensions>
 			<code_completion />
