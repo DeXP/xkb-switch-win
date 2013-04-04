@@ -150,16 +150,17 @@ char dxGetLocalizedCharByUS(char c, int layout){
 
 
 DX_EXPORT
-const char *  Xkb_Switch_getLocalizedCharByUS( char c, const char * grp ){
+const char *  Xkb_Switch_getLocalizedCharByUS( char c, const char * grp, int isUTF ){
     unsigned int i, j, n, Lid;
     HKL  lpList[MAX_LAYS];
     HKL  currentLayout;
     LCID localez;
+    UINT CodePage = CP_UTF8;
 
     short key, topkey, topw;
     unsigned char keyboardState[KBUF_SIZE];
     wchar_t wstr[KBUF_SIZE];
-    //unsigned long wbuf = 0;
+    unsigned long wbuf = 0;
     int canConvert = 0;
 
     n = GetKeyboardLayoutList(0, NULL);
@@ -186,13 +187,17 @@ const char *  Xkb_Switch_getLocalizedCharByUS( char c, const char * grp ){
            ( dtolower(grp[0]) == dtolower(aName[0]) ) &&
            ( dtolower(grp[1]) == dtolower(aName[1]) )
         ){
-            canConvert = ToUnicodeEx( key, 0, keyboardState, wstr, KBUF_SIZE, 0, currentLayout );
-            /*canConvert = ToAsciiEx( key, 0, keyboardState, &wbuf, 0, currentLayout );
-            if( canConvert > 0 ){
-                keybuf[0] = wbuf;
-                keybuf[canConvert] = 0;
+            /*if( isUTF ){*/
+                CodePage = CP_UTF8;
+                canConvert = ToUnicodeEx( key, 0, keyboardState, wstr, KBUF_SIZE, 0, currentLayout );
+            /*} else {
+                CodePage = CP_ACP;
+                canConvert = ToAsciiEx( key, 0, keyboardState, &wbuf, 0, currentLayout );
+                wstr[0] = wbuf & 0x00FF;
+                wstr[1] = wbuf & 0xFF00;
             }*/
-            WideCharToMultiByte ( CP_UTF8,                // utf8 code page
+            if( !isUTF ) CodePage = CP_ACP;
+            WideCharToMultiByte ( CodePage,                // utf8/ansi code page
                           0,     // Check
                           &wstr,         // Source Unicode string
                           canConvert,                    // -1 means string is zero-terminated
@@ -206,11 +211,26 @@ const char *  Xkb_Switch_getLocalizedCharByUS( char c, const char * grp ){
     return keybuf;
 }
 
+DX_EXPORT
+const char *  Xkb_Switch_getLocalizedCharByUSutf( char c, const char * grp ){
+    return Xkb_Switch_getLocalizedCharByUS(c, grp, 1);
+}
 
 DX_EXPORT
-const char *  Xkb_Switch_getCurrentCharByUS(const char * curChar){
+const char *  Xkb_Switch_getLocalizedCharByUSansi( char c, const char * grp ){
+    return Xkb_Switch_getLocalizedCharByUS(c, grp, 0);
+}
+
+DX_EXPORT
+const char *  Xkb_Switch_getCurrentCharByUSutf(const char * curChar){
     char c = curChar[0];
-    return Xkb_Switch_getLocalizedCharByUS( c, Xkb_Switch_getXkbLayout(NULL) );
+    return Xkb_Switch_getLocalizedCharByUS( c, Xkb_Switch_getXkbLayout(NULL), 1 );
+}
+
+DX_EXPORT
+const char *  Xkb_Switch_getCurrentCharByUSansi(const char * curChar){
+    char c = curChar[0];
+    return Xkb_Switch_getLocalizedCharByUS( c, Xkb_Switch_getXkbLayout(NULL), 0 );
 }
 
 
@@ -225,7 +245,7 @@ const char *  Xkb_Switch_getCurrentStringByUS(const char * curString){
     Xkb_Switch_getXkbLayout(NULL);
     i=0;
     while( curString[i] != 0 ){
-        retbuf = Xkb_Switch_getLocalizedCharByUS( curString[i], lName );
+        retbuf = Xkb_Switch_getLocalizedCharByUSutf( curString[i], lName );
         stringBuf[i] = retbuf[0];
         //stringBuf[i] = dxGetLocalizedCharByUS( curString[i], curLayout );
         i++;
