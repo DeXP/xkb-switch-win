@@ -7,7 +7,7 @@ xkb-switch-lib API port to Win32/Win64. Needed for [vim-xkbswitch plugin](http:/
 Installation and configuring
 ----------------------------
 
-In windows you need not only the plugin, but DLL-files from [/bin](https://github.com/DeXP/xkb-switch-win/tree/master/bin) folder. If you have 64-bit Vim, you need libxkbswitch64.dll. For 32-bit version use libxkbswitch32.dll. If you do not know - you can get both, plugin detects version automatically.
+In windows you need not only the plugin, but DLL-files from [latest release](https://github.com/DeXP/xkb-switch-win/releases). If you have 64-bit Vim, you need libxkbswitch64.dll. For 32-bit version use libxkbswitch32.dll. If you do not know - you can get both, plugin detects version automatically.
 
 By default you need to put DLL-file into top directory of Vim (where vim.exe is located). Or you need to set g:XkbSwitchLib variable:
 
